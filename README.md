@@ -8,6 +8,8 @@ Basic Steps:
 
 -Ask user their flight number.
     Functionality: Take in flight number, check arrival time, check TSA wait times.
+        *Data Source: https://developer.flightstats.com/
+        *Signed up on 3-28. Awaiting approval.
 
 -Ask user how much time they want to have once they get to the airport.
     Functionality: Allow user to choose the number of minutes they want free once they get to the airport.
