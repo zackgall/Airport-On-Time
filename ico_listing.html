@@ -1,0 +1,577 @@
+{% import "_includes/forms" as forms %}
+
+{#
+    # Public ICO Listing Form Template
+    # -------------------
+#}
+
+{% extends "_layout" %}
+{% set metaTitle = "Submit a new ICO listing" %}
+{% set metaDescription = "Form to submit a new ICO listing" %}
+{% set metaTags = "ico submit ticker" %}
+{% set title = "ICO Listing" %}
+
+{% set yesNoOptions = [{value: '0', label: 'No'}, {value: '1', label: 'Yes'}] %}
+{% set industryOptions = craft.fields.getFieldByHandle('industryCategories').settings.options %}
+{% set kycRequirementOptions = craft.fields.getFieldByHandle('kycRequirements').settings.options %}
+{% set platformOptions = craft.truefitPublicIcoSubmissions.getEntriesAsFormOptions('blockchainPlatforms') %}
+{% set countriesProhibitedOptions = craft.truefitPublicIcoSubmissions.getEntriesAsFormOptions('countries') %}
+
+
+
+{% set usaId = craft.truefitPublicIcoSubmissions.getUsaId() %}
+
+{% set timeframeOptions = craft.api.getTimeframeOptions() %}
+{% set monthOptions = craft.api.getMonthOptions() %}
+{% set quarterOptions = craft.api.getQuarterOptions() %}
+{% set timeZoneOptions = craft.api.getTimeZoneOptions() %}
+
+{% set startYear = 'now'|date('Y') %}
+{% set endYear = startYear + 2 %}
+{% set recaptchaPublicKey = craft.truefitPublicIcoSubmissions.getPublicKey() %}
+
+{% block content %}
+<h1 id="ico_submission_header">ICO Submission Form</h1>
+<div class="edit-message-container">
+    <p class="edit-message text-center">
+        This form allows you to submit a brand new ICO to be listed on our site.<br>
+        If you would like to edit an existing ICO that is already on our site,
+        <a target="_blank" href="https://docs.google.com/forms/d/e/1FAIpQLSeRiMoqEfcWQLxFm8hRqAn5MW-3OXlRDVTC-X9paUE4XwIeDA/formResponse">click here.</a>
+    </p>
+</div>
+
+<form method="post" accept-charset="UTF-8" id="publicIcoForm">
+    <input type="hidden" name="action" value="truefitPublicIcoSubmissions/main/add">
+    <input type="hidden" name="redirect" value="/">
+    <div class="pane">
+        <div id="content" class="content">
+            <div class="body">
+                <div><span class="required-asterisk">*</span> Required fields</div>
+
+
+    {% include "_includes/icoAlertSectionHeader" with {title : 'Contact Information'} %}
+
+    {{ forms.textField({
+                    label: "Contact Email",
+                    type: 'email',
+                    instructions: "This email address will be used to verify your ICO submission and will need to be confirmed after submitting form.",
+                    id: 'contactEmail',
+                    name: 'contactEmail',
+                    maxlength: 255,
+                    autocomplete: 'email',
+                    fieldClass: 'validate',
+                    required: true,
+                    validations: [
+                        {name: 'required'},
+                        {name: 'email'}
+                    ],
+                }) }}
+
+                {{ forms.textField({
+                    label: "Confirm Contact Email",
+                    type: 'email',
+                    id: 'confirmContactEmail',
+                    name: 'confirmContactEmail',
+                    maxlength: 255,
+                    autocomplete: 'email',
+                    fieldClass: 'validate',
+                    required: true,
+                    validations: [
+                        {name: 'required'},
+                        {name: 'match', targetId: 'contactEmail', message: 'must match Contact Email field'}
+                    ],
+                }) }}
+
+                {{ forms.textField({
+                    label: "Contact Name",
+                    id: 'emailContactName',
+                    name: 'emailContactName',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.selectField({
+                    label: "Native Spoken Language",
+                    id: 'emailContactLanguage',
+                    name: 'emailContactLanguage',
+                    options: [{value: 'English', label: 'English'}, {value: 'Russian', label: 'Russian'}, {value: 'Other', label: 'Other'}],
+                }) }}
+
+    {% include "_includes/icoAlertSectionHeader" with {title : 'ICO and Project Information'} %}
+
+                {{ getCsrfInput() }}
+
+                {{ forms.textField({
+                    label: "ICO Name",
+                    id: 'icoName',
+                    name: 'icoName',
+                    maxlength: 255,
+                    fieldClass: 'validate',
+                    required: true,
+                    validations: [{name: 'required'}],
+                }) }}
+
+                {{ forms.textField({
+                    label: "Website",
+                    instructions: "Must be full URL (eg. http://example.com)",
+                    id: 'website',
+                    name: 'website',
+                    maxlength: 255,
+                    fieldClass: 'validate',
+                    required: true,
+                    value: 'http://',
+                    validations: [
+                        {name: 'required'},
+                        {name: 'url'},
+                        {name: 'submission'},
+                    ],
+                }) }}
+
+                {{ forms.textField({
+                    label: "Name of Corporate Entity",
+                    id: 'corporateEntity_temp',
+                    name: 'corporateEntity_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Location / Jurisdiction of Company (Country)",
+                    id: 'companyLocation_temp',
+                    name: 'companyLocation_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Short Description of Project ",
+                    id: 'icoDescription',
+                    name: 'icoDescription',
+                    class: 'nicetext',
+                    fieldClass: 'validate',
+                    required: true,
+                    validations: [{name: 'required'}],
+                    maxlength: 115,
+                    showCharsLeft: true
+                }) }}
+
+                {{ forms.textareaField({
+                    label: "Long Description of Project",
+                    id: 'longDescription',
+                    name: 'longDescription',
+                    class: 'nicetext',
+                    maxlength: 1024,
+                    showCharsLeft: true
+                }) }}
+
+                {{ forms.multiselectField({
+                    label: "Industry",
+                    instructions: "(Select up to 3 that apply to your project)",
+                    id: 'industry',
+                    name: 'industry',
+                    options: industryOptions,
+                    maxlength: 1024
+                }) }}
+
+                {{ forms.textField({
+                    label: "Link to Whitepaper",
+                    id: 'linkToWhitepaper',
+                    name: 'linkToWhitepaper',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Link to MVP or Beta of Software",
+                    instructions: "(If Available)",
+                    id: 'linkToMvp',
+                    name: 'linkToMvp',
+                    maxlength: 255 })
+                }}
+
+    {% include "_includes/icoAlertSectionHeader" with {title : 'Token Details'} %}
+
+                {{ forms.selectField({
+                    label: "Associated Blockchain Platform",
+                    id: 'platform',
+                    name: 'platform',
+                    options: platformOptions,
+                }) }}
+
+                {{ forms.selectField({
+                    label: "Legal Status of Token",
+                    id: 'tokenStatus_temp',
+                    name: 'tokenStatus_temp',
+                    options: [{value: '', label: ''},{value: 'Utility Token', label: 'Utility Token'}, {value: 'Security Token', label: 'Security Token'}, {value: 'Cryptocurrency', label: 'Cryptocurrency'}],
+                }) }}
+
+                {{ forms.textField({
+                    label: "Token Symbol",
+                    placeholder: "i.e. ZRX, EOS, BTS, STEEM",
+                    id: 'tokenSymbol_temp',
+                    name: 'tokenSymbol_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Token Price",
+                    instructions: "(without bonuses or discounts)",
+                    id: 'tokenPrice_temp',
+                    name: 'tokenPrice_temp',
+                    placeholder: "i.e. 0.0001 ETH",
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Soft Cap",
+                    placeholder: "i.e. 100000 ETH",
+                    id: 'softCap_temp',
+                    name: 'softCap_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Hard Cap",
+                    placeholder: "i.e. 100000000 USD",
+                    id: 'hardCap_temp',
+                    name: 'hardCap_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Maximum Token Supply",
+                    id: 'maxTokenSupply_temp',
+                    name: 'maxTokenSupply_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Smart Contract Address",
+                    instructions: "(i.e. 0x123fa79b71d439b97d72f260a6aba95124441dcba)",
+                    id: 'smartContract_temp',
+                    name: 'smartContract_temp',
+                    maxlength: 115,
+                }) }}
+
+                {{ forms.textField({
+                    label: "Primary Wallet Contribution Address",
+                    instructions: "(If not using smart contact.)",
+                    id: 'contributionWallet_temp',
+                    name: 'contributionWallet_temp',
+                    maxlength: 115,
+                }) }}
+
+    {% include "_includes/icoAlertSectionHeader" with {title : 'Token Sale Restrictions'} %}
+
+                {{ forms.selectField({
+                    label: "Does your ICO require KYC?",
+                    id: 'kyc',
+                    name: 'kyc',
+                    options: yesNoOptions,
+                }) }}
+
+                {{ forms.multiselectField({
+                    label: "Which data elements are required for your ICO's KYC?",
+                    instructions: "(Select all that apply)",
+                    id: 'kycRequirements',
+                    name: 'kycRequirements',
+                    fieldClass: 'validate',
+                    options: kycRequirementOptions,
+                    required: true,
+                    validations: [
+                        {name: 'required', triggerField: 'kyc', triggerValue: '1'}
+                    ]
+                }) }}
+
+                {{ forms.multiselectField({
+                    label: "Which countries cannot participate in the ICO?",
+                    instructions: "(Select all that apply)",
+                    id: 'countriesProhibited',
+                    name: 'countriesProhibited',
+                    options: countriesProhibitedOptions,
+                    maxlength: 2014
+                }) }}
+
+                {{ forms.selectField({
+                    label: "Are accredited investors in the USA allowed?",
+                    id: 'usaAccreditedInvestorsAllowed',
+                    name: 'usaAccreditedInvestorsAllowed',
+                    options: yesNoOptions,
+                }) }}
+
+    {% include "_includes/icoAlertSectionHeader" with {title : 'Social Links'} %}
+
+
+                {{ forms.textField({
+                    label: "BitcoinTalk",
+                    id: 'linkToBitcoinTalk',
+                    name: 'linkToBitcoinTalk',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Blog",
+                    id: 'linkToBlog',
+                    name: 'linkToBlog',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Bounty Program",
+                    id: 'linkToBountyProgram',
+                    name: 'linkToBountyProgram',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Discord",
+                    id: 'linkToDiscord',
+                    name: 'linkToDiscord',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Facebook",
+                    id: 'linkToFacebook',
+                    name: 'linkToFacebook',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Github",
+                    id: 'linkToGithub',
+                    name: 'linkToGithub',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "LinkedIn",
+                    id: 'linkToLinkedin',
+                    name: 'linkToLinkedin',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Medium",
+                    id: 'linkToMedium',
+                    name: 'linkToMedium',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Reddit",
+                    id: 'linkToReddit',
+                    name: 'linkToReddit',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Slack",
+                    id: 'linkToSlack',
+                    name: 'linkToSlack',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Telegram",
+                    id: 'linkToTelegram',
+                    name: 'linkToTelegram',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "Twitter",
+                    id: 'linkToTwitter',
+                    name: 'linkToTwitter',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "VK",
+                    id: 'linkToVk',
+                    name: 'linkToVk',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "YouTube Channel",
+                    id: 'linkToYoutube',
+                    name: 'linkToYoutube',
+                    maxlength: 255 })
+                }}
+
+                {{ forms.textField({
+                    label: "YouTube Direct Link to Promo Video",
+                    id: 'linkToPromoVideo',
+                    name: 'linkToPromoVideo',
+                    maxlength: 255 })
+                }}
+
+
+
+                {% include "_includes/icoAlertSectionHeader" with {title : 'Pre-ICO'} %}
+
+                <div id="preIcoRounds"></div>
+
+                <div class="add-round-container">
+                    <input type="button" id="addPreIcoRound" class="btn" data-collection-container="#preIcoRounds" value="Add Round" />
+                </div>
+
+                {% include "_includes/icoAlertSectionHeader" with {title : 'ICO'} %}
+
+                <div id="icoRounds"></div>
+
+                <div class="add-round-container">
+                    <input type="button" id="addIcoRound" class="btn" data-collection-container="#icoRounds" value="Add Round" />
+                </div>
+
+                {% include "_includes/icoAlertSectionHeader" with {title : 'Comments'} %}
+
+                {{ forms.textareaField({
+                    label: "Is there anything else you would like us to know about your ICO? (Optional)",
+                    id: 'comments',
+                    name: 'comments',
+                    class: 'nicetext',
+                    maxlength: 1024 })
+                }}
+
+                <div class="recaptcha-container">
+                    <div class="g-recaptcha" data-sitekey="{{recaptchaPublicKey}}"></div>
+                </div>
+
+                <div>
+                    <ul class="form-errors-container" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="buttons">
+        <div class="btngroup submit">
+            <input type="submit" class="btn submit" disabled="disabled" value="{{ 'SUBMIT ICO' }}">
+        </div>
+    </div>
+</form>
+
+<div id="icoRoundTemplate" style="display: none;">
+    <div class="round panel panel-default" id="round[_XIDX_]"  data-attr-idx="_XIDX_">
+        <div class="panel-body">
+            <div class="remove-round-container">
+                <div data-attr-preround="0" data-attr-round-id="round[_XIDX_]" class="remove-round">X</div>
+            </div>
+            <div class="field timeframe" id="round[_XIDX_][timeframe]-field">
+                <div class="heading">
+                    <label id="round[_XIDX_][timeframe]-label" for="round[_XIDX_][timeframe]">Round Timeframe</label>
+                </div>
+                <div class="input ltr">
+                    <div class="select">
+                        <select class="roundTimeframe" id="round[_XIDX_][timeframe]" name="round[_XIDX_][timeframe]">
+                            {% for option in timeframeOptions %}
+                                <option value="{{option.value}}">{{option.label}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-dates">
+                <div class="field-date-container">
+                    <div class="field date" id="round[_XIDX_][startDate]-field">
+                        <div class="heading">
+                            <label id="round[_XIDX_][startDate]-label" for="round[_XIDX_][startDate]">Round Start Date</label>
+                        </div>
+                        <div class="input ltr">
+                            <div class="datewrapper">
+                                <input class="datepicker roundStartDate" type="text" id="round[_XIDX_][startDate]" name="round[_XIDX_][startDate]" data-utc="0" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field date" id="round[_XIDX_][endDate]-field">
+                        <div class="heading">
+                            <label id="round[_XIDX_][endDate]-label" for="round[_XIDX_][endDate]">Round End Date</label>
+                        </div>
+                        <div class="input ltr">
+                            <div class="datewrapper">
+                                <input class="datepicker roundEndDate" type="text" id="round[_XIDX_][endDate]" name="round[_XIDX_][endDate]" data-utc="0" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field timezone" id="round[_XIDX_][timezone]-field">
+                    <div class="heading">
+                        <label id="round[_XIDX_][timezone]-label" for="round[_XIDX_][timezone]">Time Zone</label>
+                    </div>
+                    <div class="input ltr">
+                        <div class="select">
+                            <select class="round-time-zone" id="round[_XIDX_][timeZone]" name="round[_XIDX_][timeZone]">
+                            {% for option in timeZoneOptions %}
+                            <option value="{{option.value}}">{{option.label}}</option>
+                            {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field month" id="round[_XIDX_][month]-field" style="display: none;">
+                <div class="heading">
+                    <label id="round[_XIDX_][month]-label" for="round[_XIDX_][month]">Round Month</label>
+                </div>
+                <div class="input ltr">
+                    <div class="select">
+                        <select class="roundMonth" id="round[_XIDX_][month]" name="round[_XIDX_][month]">
+                            <option value="">Select Month</option>
+                            {% for option in monthOptions %}
+                            <option value="{{option.value}}">{{option.label}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field quarter" id="round[_XIDX_][quarter]-field" style="display: none;">
+                <div class="heading">
+                    <label id="round[_XIDX_][quarter]-label" for="round[_XIDX_][quarter]">Round Quarter</label>
+                </div>
+                <div class="input ltr">
+                    <div class="select">
+                        <select class="roundQuarter" id="round[_XIDX_][quarter]" name="round[_XIDX_][quarter]">
+                            <option value="">Select Quarter</option>
+                            {% for option in quarterOptions %}
+                            <option value="{{option.value}}">{{option.label}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field year" id="round[_XIDX_][year]-field" style="display: none;">
+                <div class="heading">
+                    <label id="round[_XIDX_][year]-label" for="round[_XIDX_][year]">Round Year</label>
+                </div>
+                <div class="input ltr">
+                    <div class="select">
+                        <select class="roundYear" id="round[_XIDX_][year]" name="round[_XIDX_][year]">
+                            <option value="">Select Year</option>
+                            {% for year in range(startYear, endYear) %}
+                                <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <ul class="round-error-container" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="usaId" data-value="{{usaId}}" class="hidden"></div>
+
+<div id="submission-form-loading" style="display: none;">
+    <div class="loading-spinner"></div>
+</div>
+
+{% include "_includes/modals/_icoSubmissionExistsModal" %}
+
+{% include "_includes/modals/_icoSubmissionConfirmationModal" %}
+
+{% endblock %}
